@@ -9,7 +9,6 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json())
 
-console.log(process.env.USER_NAME);
 
 const uri = `mongodb+srv://${process.env.USER_NAME}:zEiyMkuVQ5tKpp5e@cluster0.03baylt.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -30,6 +29,20 @@ async function run() {
         // All toys
         app.get('/all-toys', async (req, res) => {
             const result = await toysCollection.find().toArray();
+            res.send(result);
+        })
+        // Toys filter by categories
+        app.get('/all-toys/:category', async (req, res) => {
+            const category = req.params.category;
+            const filter = { toyCategory: category };
+            const result = await toysCollection.find(filter).toArray();
+            res.send(result);
+        })
+        // toys show based on user
+        app.get('/my-toys/:email', async (req, res) => {
+            const email = req.params.email;
+            const filter = { userEmail: email };
+            const result = await toysCollection.find(filter).toArray();
             res.send(result);
         })
         // Add new toy
