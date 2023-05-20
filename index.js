@@ -107,8 +107,6 @@ async function run() {
             res.send(result);
         })
 
-
-
         // await client.db("admin").command({ ping: 1 });
         console.log("Your server successfully connected to MongoDB!");
     } finally {
@@ -117,7 +115,6 @@ async function run() {
     }
 }
 run().catch(console.dir);
-
 
 app.get('/', (req, res) => {
     res.send('ToyTopia is running...')
