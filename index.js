@@ -26,9 +26,30 @@ async function run() {
 
         const toysCollection = client.db('toysDB').collection('toys');
 
+        // for search create index
+        const indexKeys = { toyName: 1 };
+        const indexOptions = { name: "toyName" };
+        const result = await toysCollection.createIndex(indexKeys, indexOptions);
+
         // All toys
         app.get('/all-toys', async (req, res) => {
-            const result = await toysCollection.find().toArray();
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit
+            const result = await toysCollection.find().skip(skip).limit(limit).toArray();
+            res.send(result);
+        })
+        // Total Toys for pagination
+        app.get('/totalToys', async (req, res) => {
+            const result = await toysCollection.estimatedDocumentCount();
+            res.send({ totalToys: result });
+        })
+        // Search query
+        app.get('/search/:toyName', async (req, res) => {
+            const searchText = req.params.toyName;
+            const result = await toysCollection.find({
+                toyName: { $regex: searchText, $options: "i" }
+            }).toArray();
             res.send(result);
         })
         // Toys filter by categories
@@ -41,7 +62,7 @@ async function run() {
         // toys show based on user
         app.get('/my-toys/:email', async (req, res) => {
             const email = req.params.email;
-            const filter = { userEmail: email };
+            const filter = { sellerEmail: email };
             const result = await toysCollection.find(filter).toArray();
             res.send(result);
         })
@@ -51,6 +72,34 @@ async function run() {
             const result = await toysCollection.insertOne(newToy);
             res.send(result);
         })
+        // update signle toy get
+        app.get('/toy/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) };
+            const result = await toysCollection.findOne(filter);
+            res.send(result);
+        })
+        // Update toys
+        app.put('/update/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const updatedToy = req.body;
+            console.log(updatedToy);
+            const updated = {
+                $set: {
+                    toyName: updatedToy.toyName,
+                    toyPhoto: updatedToy.toyPhoto,
+                    toyPrice: updatedToy.toyPrice,
+                    toyQuantity: updatedToy.toyQuantity,
+                    toyRating: updatedToy.toyRating,
+                    toyCategory: updatedToy.toyCategory,
+                    toyDesc: updatedToy.toyDesc,
+                }
+            }
+            const result = await toysCollection.updateOne(query, updated);
+            res.send(result);
+        })
+        // Delete toy
         app.delete('/toys/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
