@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        await client.connect();
+        // await client.connect();
 
         const toysCollection = client.db('toysDB').collection('toys');
 
@@ -59,17 +59,16 @@ async function run() {
             const result = await toysCollection.find(filter).toArray();
             res.send(result);
         })
-        // toys show based on user
+        // toys show based on user / My toys
         app.get('/my-toys/:email', async (req, res) => {
             const email = req.params.email;
+            const { sort } = req.query;
             const filter = { sellerEmail: email };
-            const result = await toysCollection.find(filter).toArray();
-            res.send(result);
-        })
-        // Add new toy
-        app.post('/add-toy', async (req, res) => {
-            const newToy = req.body;
-            const result = await toysCollection.insertOne(newToy);
+            let sortDirection = 1;
+            if (sort === 'descending') {
+                sortDirection = -1;
+            }
+            const result = await toysCollection.find(filter).sort({ toyPrice: sortDirection }).toArray();
             res.send(result);
         })
         // update signle toy get
@@ -79,20 +78,21 @@ async function run() {
             const result = await toysCollection.findOne(filter);
             res.send(result);
         })
+        // Add new toy
+        app.post('/add-toy', async (req, res) => {
+            const newToy = req.body;
+            const result = await toysCollection.insertOne(newToy);
+            res.send(result);
+        })
         // Update toys
-        app.put('/update/:id', async (req, res) => {
+        app.put('/update-toy/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
             const updatedToy = req.body;
-            console.log(updatedToy);
             const updated = {
                 $set: {
-                    toyName: updatedToy.toyName,
-                    toyPhoto: updatedToy.toyPhoto,
                     toyPrice: updatedToy.toyPrice,
                     toyQuantity: updatedToy.toyQuantity,
-                    toyRating: updatedToy.toyRating,
-                    toyCategory: updatedToy.toyCategory,
                     toyDesc: updatedToy.toyDesc,
                 }
             }
